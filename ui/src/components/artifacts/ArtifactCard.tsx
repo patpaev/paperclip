@@ -1,6 +1,7 @@
 import { type SyntheticEvent, useEffect, useRef, useState } from "react";
 import { Download, ExternalLink, Paperclip, Play } from "lucide-react";
 import type { CompanyArtifact } from "@/api/artifacts";
+import { Card } from "@/components/ui/card";
 import { Link } from "@/lib/router";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -184,7 +185,6 @@ function SecondaryAction({
       {...(download ? { download: "" } : { target: "_blank", rel: "noreferrer" })}
       title={title}
       aria-label={title}
-      onClick={(event) => event.stopPropagation()}
       className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
       {children}
@@ -193,14 +193,14 @@ function SecondaryAction({
 }
 
 export function ArtifactCard({ artifact }: ArtifactCardProps) {
+  // The title link stretches over the whole card, so the file actions can be
+  // sibling links above it instead of anchors nested inside the card anchor.
   return (
-    <Link
-      // design-allow(card-pattern): navigation <Link> card; Card renders a div and would break anchor semantics (C5a Run 3)
-      to={artifact.href}
-      disableIssueQuicklook
+    <Card
+      interactive
       data-testid="artifact-card"
       data-media-kind={artifact.mediaKind}
-      className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card cursor-pointer transition-colors hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group relative gap-0 overflow-hidden py-0"
     >
       <ArtifactPreview artifact={artifact} />
 
@@ -210,9 +210,15 @@ export function ArtifactCard({ artifact }: ArtifactCardProps) {
             className="min-w-0 flex-1 truncate text-sm font-medium leading-7 text-foreground/85"
             title={artifact.title}
           >
-            {artifact.title}
+            <Link
+              to={artifact.href}
+              disableIssueQuicklook
+              className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ring"
+            >
+              {artifact.title}
+            </Link>
           </h3>
-          <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          <div className="relative flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100">
             {artifact.openPath ? (
               <SecondaryAction href={artifact.openPath} title="Open file in new tab">
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -236,6 +242,6 @@ export function ArtifactCard({ artifact }: ArtifactCardProps) {
           ) : null}
         </div>
       </div>
-    </Link>
+    </Card>
   );
 }
