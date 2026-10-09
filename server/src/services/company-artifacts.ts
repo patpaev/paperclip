@@ -453,6 +453,7 @@ export function companyArtifactsService(db: Db, storage?: StorageService) {
         for (const row of documentRows) {
           const identifier = row.issueIdentifier ?? row.issueId;
           artifactSortDates.set(row.artifactId, (row.starredAt ?? row.updatedAt).toISOString());
+          const documentContentPath = `/api/issues/${row.issueId}/documents/${encodeURIComponent(row.key)}/content`;
           artifacts.push({
             id: row.artifactId,
             source: "document",
@@ -461,8 +462,8 @@ export function companyArtifactsService(db: Db, storage?: StorageService) {
             previewText: normalizePreviewText(row.latestBody),
             contentType: "text/markdown",
             contentPath: null,
-            openPath: null,
-            downloadPath: null,
+            openPath: documentContentPath,
+            downloadPath: `${documentContentPath}?download=1`,
             issue: { id: row.issueId, identifier, title: row.issueTitle },
             project: row.projectId && row.projectName ? { id: row.projectId, name: row.projectName } : null,
             createdByAgent: row.createdByAgentId && row.createdByAgentName

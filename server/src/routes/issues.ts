@@ -10176,6 +10176,51 @@ export function issueRoutes(
     res.json({ ...doc, annotations });
   });
 
+  // Raw markdown body, served like attachment content so it can be opened in a
+  // new tab or downloaded (`?download=1`) directly.
+  router.get("/issues/:id/documents/:key/content", async (req, res) => {
+    const id = req.params.id as string;
+    const issue = await getAccessibleResource(
+      req,
+      res,
+      getIssueById(req, id),
+      "Issue not found",
+    );
+    if (!issue) return;
+    if (!(await assertIssueReadAllowed(req, res, issue))) return;
+    const keyParsed = issueDocumentKeySchema.safeParse(
+      String(req.params.key ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    if (!keyParsed.success) {
+      res.status(400).json({
+        error: "Invalid document key",
+        details: keyParsed.error.issues,
+      });
+      return;
+    }
+    const doc = await documentsSvc.getIssueDocumentByKey(
+      issue.id,
+      keyParsed.data,
+    );
+    if (!doc) {
+      res.status(404).json({ error: "Document not found" });
+      return;
+    }
+    res.attachment(`${doc.key}.md`);
+    if (!parseBooleanQuery(req.query.download)) {
+      res.setHeader(
+        "Content-Disposition",
+        String(res.getHeader("Content-Disposition")).replace(/^attachment;/, "inline;"),
+      );
+    }
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    res.setHeader("Cache-Control", "private, no-cache");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.send(doc.body);
+  });
+
   router.get("/issues/:id/documents/:key/annotations", async (req, res) => {
     const id = req.params.id as string;
     const issue = await getAccessibleResource(

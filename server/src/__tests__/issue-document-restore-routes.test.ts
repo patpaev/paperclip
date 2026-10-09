@@ -10,6 +10,7 @@ const mockIssueService = vi.hoisted(() => ({
 }));
 
 const mockDocumentsService = vi.hoisted(() => ({
+  getIssueDocumentByKey: vi.fn(),
   listIssueDocuments: vi.fn(),
   listIssueDocumentRevisions: vi.fn(),
   restoreIssueDocumentRevision: vi.fn(),
@@ -315,6 +316,22 @@ describe("issue document revision routes", () => {
       expect.objectContaining({ key: "plan" }),
       expect.objectContaining({ key: "system-plan" }),
     ]);
+  });
+
+  it("serves the raw document body inline, or as a .md download with download=1", async () => {
+    mockDocumentsService.getIssueDocumentByKey.mockResolvedValue({ ...planDocument, body: "# Plan\n\nCafé ✓" });
+    const app = await createApp();
+
+    const inline = await request(app).get(`/api/issues/${issueId}/documents/plan/content`);
+    expect(inline.status).toBe(200);
+    expect(inline.headers["content-type"]).toBe("text/markdown; charset=utf-8");
+    expect(inline.headers["content-disposition"]).toMatch(/^inline; filename="plan\.md"/);
+    expect(inline.text).toBe("# Plan\n\nCafé ✓");
+
+    const download = await request(app).get(`/api/issues/${issueId}/documents/plan/content?download=1`);
+    expect(download.status).toBe(200);
+    expect(download.headers["content-disposition"]).toMatch(/^attachment; filename="plan\.md"/);
+    expect(mockDocumentsService.getIssueDocumentByKey).toHaveBeenCalledWith(issueId, "plan");
   });
 
   it("restores a revision through the append-only route and logs the action", async () => {

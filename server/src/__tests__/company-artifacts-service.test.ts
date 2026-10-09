@@ -452,6 +452,11 @@ describeEmbeddedPostgres("companyArtifactsService", () => {
     ]);
     expect(result.artifacts.find((artifact) => artifact.title === "notes.txt")?.previewText)
       .toBe("Text file preview from an agent output.");
+    const reviewContentPath = "/api/issues/77777777-7777-4777-8777-777777777777/documents/review/content";
+    expect(result.artifacts.find((artifact) => artifact.title === "Review Notes")).toMatchObject({
+      openPath: reviewContentPath,
+      downloadPath: `${reviewContentPath}?download=1`,
+    });
     expect(result.artifacts.some((artifact) => artifact.title === "primary-cut.mp4")).toBe(false);
     expect(result.artifacts.some((artifact) => artifact.title === "Continuation Summary")).toBe(false);
     expect(result.artifacts.some((artifact) => artifact.title === "operator-screenshot.png")).toBe(false);
