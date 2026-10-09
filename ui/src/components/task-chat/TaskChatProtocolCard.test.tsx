@@ -119,6 +119,26 @@ describe("TaskChatProtocolCard", () => {
     container.remove();
   });
 
+  it("links a thread document tile to its markdown download outside the tile link", () => {
+    renderCard(root, {
+      id: "resource:document:doc-1",
+      kind: "protocol",
+      surface: "resource",
+      resourceKind: "document",
+      title: "Barber Spec",
+      subtitle: "Document · rev 3",
+      href: "#document-barber-spec",
+      document: { id: "doc-1", issueId: "issue-1", key: "barber-spec" } as NonNullable<
+        Extract<TaskChatProtocolItem, { surface: "resource" }>["document"]
+      >,
+    });
+
+    const download = container.querySelector('a[aria-label="Download Barber Spec"]');
+    expect(download?.getAttribute("href")).toBe("/api/issues/issue-1/documents/barber-spec/content?download=1");
+    expect(download?.hasAttribute("download")).toBe(true);
+    expect(download?.parentElement?.closest("a")).toBeNull();
+  });
+
   it("renders a rich deliverable card without a completed chip", () => {
     const product = workProduct({
       metadata: {

@@ -85,6 +85,22 @@ describe("issue properties document annotation mounting", () => {
     await act(async () => root.unmount());
   });
 
+  it.each([
+    ["Artifacts", <IssuePropertiesArtifactsTab issue={issue} />, "/api/issues/issue-1/documents/qa-evidence/content"],
+    ["Plans", <IssuePropertiesPlansTab issue={issue} />, "/api/issues/issue-1/documents/plan/content"],
+  ])("links the %s tab document to its raw markdown and download routes", async (_tab, element, contentPath) => {
+    const root = createRoot(container);
+    await act(async () => root.render(element));
+
+    const open = container.querySelector('a[aria-label="Open raw QA evidence"]');
+    const download = container.querySelector('a[aria-label="Download QA evidence"]');
+    expect(open?.getAttribute("href")).toBe(contentPath);
+    expect(open?.getAttribute("target")).toBe("_blank");
+    expect(download?.getAttribute("href")).toBe(`${contentPath}?download=1`);
+    expect(download?.hasAttribute("download")).toBe(true);
+    await act(async () => root.unmount());
+  });
+
   it("expands and scrolls the requested document into view", async () => {
     const root = createRoot(container);
     await act(async () => root.render(

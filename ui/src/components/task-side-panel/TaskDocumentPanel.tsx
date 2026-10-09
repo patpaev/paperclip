@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { IssueDocument } from "@paperclipai/shared";
+import { issueDocumentContentPath } from "@paperclipai/shared";
 import { FileQuestion, Loader2 } from "lucide-react";
 import { ApiError } from "@/api/client";
 import { issuesApi } from "@/api/issues";
+import { FileActionLinks } from "@/components/artifacts/FileActionLinks";
 import { DocumentAnnotationsCountChip, IssueDocumentAnnotations } from "@/components/IssueDocumentAnnotations";
 import { MarkdownBody } from "@/components/MarkdownBody";
 import { queryKeys } from "@/lib/queryKeys";
@@ -67,7 +69,13 @@ export function TaskDocumentPanel({
   return (
     <article className="space-y-4">
       <header className="space-y-1">
-        <h2 className="text-lg font-semibold">{documentDisplayTitle(document)}</h2>
+        <div className="flex items-start gap-2">
+          <h2 className="min-w-0 flex-1 text-lg font-semibold">{documentDisplayTitle(document)}</h2>
+          <FileActionLinks
+            title={documentDisplayTitle(document)}
+            contentPath={issueDocumentContentPath(issueId, document.key)}
+          />
+        </div>
         <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
           <span>{`Revision ${document.latestRevisionNumber ?? 1}`}</span>
           <span aria-hidden>·</span>

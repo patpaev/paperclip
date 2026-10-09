@@ -10,7 +10,7 @@ import type {
   Issue,
   IssueDocument,
 } from "@paperclipai/shared";
-import { isSystemIssueDocumentKey } from "@paperclipai/shared";
+import { isSystemIssueDocumentKey, issueDocumentFilename } from "@paperclipai/shared";
 import { useLocation } from "@/lib/router";
 import { ApiError } from "../api/client";
 import { issuesApi } from "../api/issues";
@@ -134,12 +134,14 @@ function isLockedDocumentError(error: unknown) {
   return error instanceof ApiError && error.status === 409 && error.message === "Document is locked";
 }
 
-function downloadDocumentFile(key: string, body: string) {
+// Saves the body on screen, which may be a historical revision or an unsaved
+// draft, so this builds the file locally instead of using the content route.
+function downloadDocumentFile(filename: string, body: string) {
   const blob = new Blob([body], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `${key}.md`;
+  anchor.download = filename;
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
@@ -1116,7 +1118,7 @@ export function IssueDocumentsSection({
                         ) : null}
                         {!isHistoricalPreview && !isLocked ? <DropdownMenuSeparator /> : null}
                         <DropdownMenuItem
-                          onClick={() => downloadDocumentFile(doc.key, displayedBody)}
+                          onClick={() => downloadDocumentFile(issueDocumentFilename(issue?.identifier, doc.key), displayedBody)}
                         >
                           <Download className="h-3.5 w-3.5" />
                           Download document

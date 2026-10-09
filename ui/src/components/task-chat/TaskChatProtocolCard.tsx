@@ -8,6 +8,7 @@ import {
   Circle,
   CircleHelp,
   Clock3,
+  Download,
   ExternalLink,
   FileCode2,
   FileText,
@@ -18,6 +19,7 @@ import {
   TerminalSquare,
   X,
 } from "lucide-react";
+import { issueDocumentContentPath } from "@paperclipai/shared";
 import { MarkdownBody } from "@/components/MarkdownBody";
 import type { MentionOption } from "@/components/MarkdownEditor";
 import { WorkspaceFileLink } from "@/components/WorkspaceFileLink";
@@ -137,6 +139,7 @@ function CardShell({
   children,
   testId,
   presentation = "timeline",
+  headerClassName,
 }: {
   icon: typeof Circle;
   title: string;
@@ -145,6 +148,7 @@ function CardShell({
   children?: React.ReactNode;
   testId: string;
   presentation?: "timeline" | "takeover";
+  headerClassName?: string;
 }) {
   const titleRow = (
     <div className="flex min-w-0 items-center gap-2">
@@ -196,7 +200,7 @@ function CardShell({
       )}
       data-testid={testId}
     >
-      <header className="flex min-w-0 items-start gap-2 px-3 py-2.5">
+      <header className={cn("flex min-w-0 items-start gap-2 px-3 py-2.5", headerClassName)}>
         <Icon
           aria-hidden
           className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
@@ -1027,6 +1031,7 @@ function ResourceCard({
       : item.resourceKind === "attachment"
         ? FileCode2
         : PackageCheck;
+  const doc = item.resourceKind === "document" ? item.document : undefined;
   const body = (
     <CardShell
       icon={Icon}
@@ -1034,9 +1039,10 @@ function ResourceCard({
       status={null}
       summary={item.subtitle}
       testId={`task-chat-resource-${item.resourceKind}`}
+      headerClassName={doc ? "pr-12" : undefined}
     />
   );
-  return item.href ? (
+  const card = item.href ? (
     <a
       className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       href={item.href}
@@ -1045,6 +1051,24 @@ function ResourceCard({
     </a>
   ) : (
     body
+  );
+  if (!doc) return card;
+  // The card is itself a link, so the download control sits beside it rather
+  // than nested inside the anchor.
+  return (
+    <div className="relative">
+      {card}
+      <Button asChild variant="ghost" size="icon-sm" className="absolute top-2 right-2 text-muted-foreground">
+        <a
+          href={`${issueDocumentContentPath(doc.issueId, doc.key)}?download=1`}
+          download
+          aria-label={`Download ${item.title}`}
+          title="Download"
+        >
+          <Download aria-hidden />
+        </a>
+      </Button>
+    </div>
   );
 }
 

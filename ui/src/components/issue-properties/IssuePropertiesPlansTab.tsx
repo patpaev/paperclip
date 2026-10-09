@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Issue, IssueThreadInteraction } from "@paperclipai/shared";
+import { issueDocumentContentPath } from "@paperclipai/shared";
 import { issuesApi } from "@/api/issues";
 import { queryKeys } from "@/lib/queryKeys";
 import { IssuePlanDecompositionsSection } from "@/components/IssuePlanDecompositionsSection";
@@ -8,6 +9,8 @@ import { MarkdownBody } from "@/components/MarkdownBody";
 import { DocumentAnnotationsCountChip, IssueDocumentAnnotations } from "@/components/IssueDocumentAnnotations";
 import { useIssuePlanDocument } from "@/hooks/useIssuePlanDocument";
 import { useLocation } from "@/lib/router";
+import { documentDisplayTitle } from "@/lib/issue-artifacts";
+import { FileActionLinks } from "@/components/artifacts/FileActionLinks";
 
 interface IssuePropertiesPlansTabProps {
   issue: Issue;
@@ -92,6 +95,12 @@ export function IssuePropertiesPlansTab({ issue }: IssuePropertiesPlansTabProps)
               panelOpen={annotationPanelOpen}
               onToggle={() => setAnnotationPanelOpen((open) => !open)}
             />
+            <div className="ml-auto flex shrink-0 items-center">
+              <FileActionLinks
+                title={documentDisplayTitle(planDocument)}
+                contentPath={issueDocumentContentPath(issue.id, planDocument.key)}
+              />
+            </div>
           </div>
           <IssueDocumentAnnotations
             issueId={issue.id}

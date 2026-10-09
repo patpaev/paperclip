@@ -12,8 +12,9 @@ import {
   artifactReviewDocumentKey,
   getMarkdownWorkProductAttachmentMetadata,
   isArtifactReviewDocumentKey,
+  issueDocumentContentPath,
 } from "@paperclipai/shared";
-import { Download, ExternalLink, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { ApiError } from "@/api/client";
 import { issuesApi } from "@/api/issues";
 import { activityApi } from "@/api/activity";
@@ -26,6 +27,8 @@ import {
   selectAgentArtifactAttachments,
 } from "@/lib/issue-artifacts";
 import { DocumentCard } from "@/components/artifacts/RichArtifactCards";
+import { FileActionLinks } from "@/components/artifacts/FileActionLinks";
+import { Button } from "@/components/ui/button";
 import {
   IssueArtifactFile,
   IssueWorkProductArtifactCard,
@@ -236,34 +239,18 @@ function MarkdownWorkProductRow({
                 />
               ) : null}
               {openTextAttachment ? (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => openTextAttachment(metadata.attachmentId, metadata.originalFilename ?? workProduct.title)}
                   aria-label={`Open in tab: ${workProduct.title}`}
                   title="Open in tab"
-                  className="shrink-0 px-1.5 py-1.5 text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground"
                 >
-                  <FileText className="h-3 w-3" />
-                </button>
+                  <FileText aria-hidden />
+                </Button>
               ) : null}
-              <a
-                href={metadata.openPath}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Open raw ${workProduct.title}`}
-                title="Open raw"
-                className="shrink-0 px-1.5 py-1.5 text-muted-foreground hover:text-foreground"
-              >
-                <ExternalLink className="h-3 w-3" />
-              </a>
-              <a
-                href={metadata.downloadPath}
-                aria-label={`Download ${workProduct.title}`}
-                title="Download"
-                className="shrink-0 py-1.5 pr-2 pl-0.5 text-muted-foreground hover:text-foreground"
-              >
-                <Download className="h-3 w-3" />
-              </a>
+              <FileActionLinks title={workProduct.title} contentPath={metadata.contentPath} />
             </>
           }
         />
@@ -313,17 +300,23 @@ function DocumentRow({
         onOpen={onOpen ?? (() => setExpanded((open) => !open))}
         expanded={onOpen ? undefined : expanded}
         actions={
-          !onOpen ? (
-            <DocumentAnnotationsCountChip
-              issueId={issueId}
-              docKey={doc.key}
-              panelOpen={annotationPanelOpen}
-              onToggle={() => {
-                setExpanded(true);
-                setAnnotationPanelOpen((open) => !open);
-              }}
+          <>
+            {!onOpen ? (
+              <DocumentAnnotationsCountChip
+                issueId={issueId}
+                docKey={doc.key}
+                panelOpen={annotationPanelOpen}
+                onToggle={() => {
+                  setExpanded(true);
+                  setAnnotationPanelOpen((open) => !open);
+                }}
+              />
+            ) : null}
+            <FileActionLinks
+              title={documentDisplayTitle(doc)}
+              contentPath={issueDocumentContentPath(issueId, doc.key)}
             />
-          ) : undefined
+          </>
         }
       />
       {expanded ? (
