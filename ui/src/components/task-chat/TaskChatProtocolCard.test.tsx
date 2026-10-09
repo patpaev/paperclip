@@ -119,6 +119,46 @@ describe("TaskChatProtocolCard", () => {
     container.remove();
   });
 
+  it("downloads a thread document tile as its raw markdown", async () => {
+    const { issuesApi } = await import("@/api/issues");
+    const getDocument = vi.spyOn(issuesApi, "getDocument").mockResolvedValue({
+      key: "barber-spec",
+      body: "# Barber spec",
+    } as Awaited<ReturnType<typeof issuesApi.getDocument>>);
+    const blobs: Blob[] = [];
+    const downloads: string[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob) => {
+      blobs.push(blob);
+      return "blob:document";
+    });
+    URL.revokeObjectURL = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      downloads.push(this.download);
+    });
+    renderCard(root, {
+      id: "resource:document:doc-1",
+      kind: "protocol",
+      surface: "resource",
+      resourceKind: "document",
+      title: "Barber Spec",
+      subtitle: "Document · rev 3",
+      href: "#document-barber-spec",
+      document: { id: "doc-1", issueId: "issue-1", key: "barber-spec" } as NonNullable<
+        Extract<TaskChatProtocolItem, { surface: "resource" }>["document"]
+      >,
+    });
+
+    const button = container.querySelector('button[aria-label="Download Barber Spec"]') as HTMLButtonElement;
+    expect(button.closest("a")).toBeNull();
+    await act(async () => button.click());
+
+    expect(getDocument).toHaveBeenCalledWith("issue-1", "barber-spec");
+    expect(downloads).toEqual(["barber-spec.md"]);
+    expect(await blobs[0]?.text()).toBe("# Barber spec");
+    click.mockRestore();
+    getDocument.mockRestore();
+  });
+
   it("renders a rich deliverable card without a completed chip", () => {
     const product = workProduct({
       metadata: {

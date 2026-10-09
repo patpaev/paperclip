@@ -8,6 +8,7 @@ import {
   Circle,
   CircleHelp,
   Clock3,
+  Download,
   ExternalLink,
   FileCode2,
   FileText,
@@ -30,6 +31,9 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { issuesApi } from "@/api/issues";
+import { useOptionalToastActions } from "@/context/ToastContext";
+import { downloadDocumentFile } from "@/lib/download-document";
 import {
   clearDraft,
   loadStructuredDraft,
@@ -137,6 +141,7 @@ function CardShell({
   children,
   testId,
   presentation = "timeline",
+  headerClassName,
 }: {
   icon: typeof Circle;
   title: string;
@@ -145,6 +150,7 @@ function CardShell({
   children?: React.ReactNode;
   testId: string;
   presentation?: "timeline" | "takeover";
+  headerClassName?: string;
 }) {
   const titleRow = (
     <div className="flex min-w-0 items-center gap-2">
@@ -196,7 +202,7 @@ function CardShell({
       )}
       data-testid={testId}
     >
-      <header className="flex min-w-0 items-start gap-2 px-3 py-2.5">
+      <header className={cn("flex min-w-0 items-start gap-2 px-3 py-2.5", headerClassName)}>
         <Icon
           aria-hidden
           className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
@@ -1027,6 +1033,7 @@ function ResourceCard({
       : item.resourceKind === "attachment"
         ? FileCode2
         : PackageCheck;
+  const doc = item.resourceKind === "document" ? item.document : undefined;
   const body = (
     <CardShell
       icon={Icon}
@@ -1034,9 +1041,10 @@ function ResourceCard({
       status={null}
       summary={item.subtitle}
       testId={`task-chat-resource-${item.resourceKind}`}
+      headerClassName={doc ? "pr-10" : undefined}
     />
   );
-  return item.href ? (
+  const card = item.href ? (
     <a
       className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       href={item.href}
@@ -1045,6 +1053,55 @@ function ResourceCard({
     </a>
   ) : (
     body
+  );
+  if (!doc) return card;
+  // The card is itself a link, so the download control sits beside it rather
+  // than nested inside the anchor.
+  return (
+    <div className="relative">
+      {card}
+      <DocumentDownloadButton doc={doc} title={item.title} />
+    </div>
+  );
+}
+
+function DocumentDownloadButton({
+  doc,
+  title,
+}: {
+  doc: NonNullable<Extract<TaskChatProtocolItem, { surface: "resource" }>["document"]>;
+  title: string;
+}) {
+  const toastActions = useOptionalToastActions();
+  const [pending, setPending] = useState(false);
+  // Thread resources carry document summaries without bodies, so fetch the
+  // latest revision on demand.
+  const download = async () => {
+    setPending(true);
+    try {
+      const full = await issuesApi.getDocument(doc.issueId, doc.key);
+      downloadDocumentFile(full.key, full.body);
+    } catch (error) {
+      toastActions?.pushToast({
+        title: "Download failed",
+        body: error instanceof Error ? error.message : "Could not load the document.",
+        tone: "error",
+      });
+    } finally {
+      setPending(false);
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={() => void download()}
+      disabled={pending}
+      aria-label={`Download ${title}`}
+      title="Download"
+      className="absolute top-1.5 right-1.5 rounded-sm p-1.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+    </button>
   );
 }
 
