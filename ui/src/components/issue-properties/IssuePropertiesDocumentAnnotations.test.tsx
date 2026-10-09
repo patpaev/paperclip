@@ -85,6 +85,33 @@ describe("issue properties document annotation mounting", () => {
     await act(async () => root.unmount());
   });
 
+  it.each([
+    ["Artifacts", <IssuePropertiesArtifactsTab issue={issue} />, "Download QA evidence", "qa-evidence.md"],
+    ["Plans", <IssuePropertiesPlansTab issue={issue} />, "Download QA evidence", "plan.md"],
+  ])("downloads the raw markdown body from the %s tab", async (_tab, element, label, filename) => {
+    const blobs: Blob[] = [];
+    const downloads: string[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob) => {
+      blobs.push(blob);
+      return "blob:document";
+    });
+    URL.revokeObjectURL = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      downloads.push(this.download);
+    });
+    const root = createRoot(container);
+    await act(async () => root.render(element));
+
+    const button = container.querySelector(`button[aria-label="${label}"]`) as HTMLButtonElement;
+    await act(async () => button.click());
+
+    expect(downloads).toEqual([filename]);
+    expect(blobs[0]?.type).toBe("text/markdown;charset=utf-8");
+    expect(await blobs[0]?.text()).toBe("Shared annotation target");
+    click.mockRestore();
+    await act(async () => root.unmount());
+  });
+
   it("expands and scrolls the requested document into view", async () => {
     const root = createRoot(container);
     await act(async () => root.render(

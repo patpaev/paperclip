@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Download } from "lucide-react";
 import type { Issue, IssueThreadInteraction } from "@paperclipai/shared";
 import { issuesApi } from "@/api/issues";
 import { queryKeys } from "@/lib/queryKeys";
@@ -8,6 +9,8 @@ import { MarkdownBody } from "@/components/MarkdownBody";
 import { DocumentAnnotationsCountChip, IssueDocumentAnnotations } from "@/components/IssueDocumentAnnotations";
 import { useIssuePlanDocument } from "@/hooks/useIssuePlanDocument";
 import { useLocation } from "@/lib/router";
+import { documentDisplayTitle } from "@/lib/issue-artifacts";
+import { downloadDocumentFile } from "@/lib/download-document";
 
 interface IssuePropertiesPlansTabProps {
   issue: Issue;
@@ -92,6 +95,15 @@ export function IssuePropertiesPlansTab({ issue }: IssuePropertiesPlansTabProps)
               panelOpen={annotationPanelOpen}
               onToggle={() => setAnnotationPanelOpen((open) => !open)}
             />
+            <button
+              type="button"
+              onClick={() => downloadDocumentFile(planDocument.key, planDocument.body)}
+              aria-label={`Download ${documentDisplayTitle(planDocument)}`}
+              title="Download"
+              className="ml-auto shrink-0 px-1.5 py-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <Download className="h-3 w-3" />
+            </button>
           </div>
           <IssueDocumentAnnotations
             issueId={issue.id}

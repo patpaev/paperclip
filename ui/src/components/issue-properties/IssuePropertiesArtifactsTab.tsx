@@ -40,6 +40,7 @@ import {
   IssueDocumentAnnotations,
 } from "@/components/IssueDocumentAnnotations";
 import { formatDateTime } from "@/lib/utils";
+import { downloadDocumentFile } from "@/lib/download-document";
 import { useLocation } from "@/lib/router";
 
 interface IssuePropertiesArtifactsTabProps {
@@ -313,17 +314,28 @@ function DocumentRow({
         onOpen={onOpen ?? (() => setExpanded((open) => !open))}
         expanded={onOpen ? undefined : expanded}
         actions={
-          !onOpen ? (
-            <DocumentAnnotationsCountChip
-              issueId={issueId}
-              docKey={doc.key}
-              panelOpen={annotationPanelOpen}
-              onToggle={() => {
-                setExpanded(true);
-                setAnnotationPanelOpen((open) => !open);
-              }}
-            />
-          ) : undefined
+          <>
+            {!onOpen ? (
+              <DocumentAnnotationsCountChip
+                issueId={issueId}
+                docKey={doc.key}
+                panelOpen={annotationPanelOpen}
+                onToggle={() => {
+                  setExpanded(true);
+                  setAnnotationPanelOpen((open) => !open);
+                }}
+              />
+            ) : null}
+            <button
+              type="button"
+              onClick={() => downloadDocumentFile(doc.key, doc.body)}
+              aria-label={`Download ${documentDisplayTitle(doc)}`}
+              title="Download"
+              className="shrink-0 py-1.5 pr-2 pl-0.5 text-muted-foreground hover:text-foreground"
+            >
+              <Download className="h-3 w-3" />
+            </button>
+          </>
         }
       />
       {expanded ? (
