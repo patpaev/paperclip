@@ -10,6 +10,7 @@ const mockIssueService = vi.hoisted(() => ({
 }));
 
 const mockDocumentsService = vi.hoisted(() => ({
+  getIssueDocumentByKey: vi.fn(),
   listIssueDocuments: vi.fn(),
   listIssueDocumentRevisions: vi.fn(),
   restoreIssueDocumentRevision: vi.fn(),
@@ -315,6 +316,51 @@ describe("issue document revision routes", () => {
       expect.objectContaining({ key: "plan" }),
       expect.objectContaining({ key: "system-plan" }),
     ]);
+  });
+
+  it("serves the raw document body inline, or as an identifier-prefixed .md download with download=1", async () => {
+    mockDocumentsService.getIssueDocumentByKey.mockResolvedValue({ ...planDocument, body: "# Plan\n\nCafé ✓" });
+    const app = await createApp();
+
+    const inline = await request(app).get(`/api/issues/${issueId}/documents/plan/content`);
+    expect(inline.status).toBe(200);
+    expect(inline.headers["content-type"]).toBe("text/markdown; charset=utf-8");
+    expect(inline.headers["content-disposition"]).toMatch(/^inline; filename="PAP-881-plan\.md"/);
+    expect(inline.headers["x-content-type-options"]).toBe("nosniff");
+    expect(inline.headers["content-security-policy"]).toContain("sandbox");
+    expect(inline.text).toBe("# Plan\n\nCafé ✓");
+
+    const download = await request(app).get(`/api/issues/${issueId}/documents/plan/content?download=1`);
+    expect(download.status).toBe(200);
+    expect(download.headers["content-disposition"]).toMatch(/^attachment; filename="PAP-881-plan\.md"/);
+    expect(mockDocumentsService.getIssueDocumentByKey).toHaveBeenCalledWith(issueId, "plan");
+  });
+
+  it("returns 404 for a missing document and 400 for an invalid key on the content route", async () => {
+    mockDocumentsService.getIssueDocumentByKey.mockResolvedValue(null);
+    const app = await createApp();
+
+    const missing = await request(app).get(`/api/issues/${issueId}/documents/plan/content`);
+    expect(missing.status).toBe(404);
+    expect(missing.body.error).toBe("Document not found");
+
+    const invalid = await request(app).get(`/api/issues/${issueId}/documents/INVALID KEY/content`);
+    expect(invalid.status).toBe(400);
+  });
+
+  it("hides document content from actors outside the issue's company", async () => {
+    mockDocumentsService.getIssueDocumentByKey.mockResolvedValue(planDocument);
+    const res = await request(await createApp({
+      type: "board",
+      userId: "other-user",
+      companyIds: ["99999999-9999-4999-8999-999999999999"],
+      source: "session",
+      isInstanceAdmin: false,
+    })).get(`/api/issues/${issueId}/documents/plan/content`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("Issue not found");
+    expect(mockDocumentsService.getIssueDocumentByKey).not.toHaveBeenCalled();
   });
 
   it("restores a revision through the append-only route and logs the action", async () => {

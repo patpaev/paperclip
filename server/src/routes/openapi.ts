@@ -4322,6 +4322,23 @@ registry.registerPath({
 });
 
 registry.registerPath({
+  method: "get",
+  path: "/api/issues/{id}/documents/{key}/content",
+  tags: ["issues"],
+  summary: "Get an issue document's raw markdown (inline, or as a download with download=true)",
+  request: {
+    params: z.object({ id: z.string(), key: z.string() }),
+    query: z.object({ download: z.enum(["true", "false", "1", "0"]).optional() }),
+  },
+  responses: {
+    200: { description: "Markdown body (text/markdown)" },
+    400: r.badRequest,
+    401: r.unauthorized,
+    404: r.notFound,
+  },
+});
+
+registry.registerPath({
   method: "put",
   path: "/api/issues/{id}/documents/{key}",
   tags: ["issues"],

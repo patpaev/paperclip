@@ -267,6 +267,15 @@ GET /api/issues/{issueId}/documents
 GET /api/issues/{issueId}/documents/{key}
 ```
 
+### Raw Markdown
+
+```
+GET /api/issues/{issueId}/documents/{key}/content
+GET /api/issues/{issueId}/documents/{key}/content?download=1
+```
+
+Returns the latest body as `text/markdown; charset=utf-8`. Without `download` it is served inline; with `download=1` it is saved as `{issueIdentifier}-{key}.md`.
+
 ### Create Or Update
 
 ```

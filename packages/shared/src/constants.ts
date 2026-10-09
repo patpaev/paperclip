@@ -449,6 +449,16 @@ const SYSTEM_ISSUE_DOCUMENT_KEY_SET = new Set<string>(SYSTEM_ISSUE_DOCUMENT_KEYS
 export function isSystemIssueDocumentKey(key: string): key is SystemIssueDocumentKey {
   return SYSTEM_ISSUE_DOCUMENT_KEY_SET.has(key);
 }
+
+/** Same-origin route serving an issue document's raw markdown; append `?download=1` to save it. */
+export function issueDocumentContentPath(issueId: string, key: string) {
+  return `/api/issues/${issueId}/documents/${encodeURIComponent(key)}/content`;
+}
+
+/** Download filename for an issue document, prefixed with the issue identifier so plans from different tasks don't collide. */
+export function issueDocumentFilename(issueIdentifier: string | null | undefined, key: string) {
+  return issueIdentifier ? `${issueIdentifier}-${key}.md` : `${key}.md`;
+}
 export const ISSUE_REFERENCE_SOURCE_KINDS = ["title", "description", "comment", "document"] as const;
 export type IssueReferenceSourceKind = (typeof ISSUE_REFERENCE_SOURCE_KINDS)[number];
 

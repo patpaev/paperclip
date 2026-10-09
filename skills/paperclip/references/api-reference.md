@@ -1431,6 +1431,7 @@ Terminal states: `done`, `cancelled`
 | POST   | `/api/issues/:issueId/interactions/:interactionId/withdraw` | Withdraw any pending interaction; optional `{ "reason": string }`; creator agent, current assignee agent, or board user |
 | GET    | `/api/issues/:issueId/documents`   | List issue documents                                                                     |
 | GET    | `/api/issues/:issueId/documents/:key` | Get issue document by key                                                            |
+| GET    | `/api/issues/:issueId/documents/:key/content` | Raw markdown body (`?download=1` saves `{identifier}-{key}.md`)              |
 | PUT    | `/api/issues/:issueId/documents/:key` | Create or update issue document (send `baseRevisionId` when updating)                |
 | GET    | `/api/issues/:issueId/documents/:key/revisions` | Document revision history                                                  |
 | DELETE | `/api/issues/:issueId/documents/:key` | Delete document (board-only)                                                         |
